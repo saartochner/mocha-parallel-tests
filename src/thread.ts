@@ -13,10 +13,12 @@ export interface ThreadOptions {
   fullTrace: boolean;
   grep?: string;
   isTypescriptRunMode: boolean;
+  file: string[];
   requires: string[];
   retries?: number;
   slow?: boolean;
   timeout?: number;
+  ui?: string;
   env?: boolean;
   streamOutput?: boolean;
 }
