@@ -101,6 +101,14 @@ export default class MochaWrapper extends Mocha {
     runner.emitStartEvents();
     taskManager.execute();
 
+    const done = (failures: number) => {
+      if (reporter.done) {
+        reporter.done(failures, onComplete);
+      } else if (onComplete) {
+        onComplete(failures);
+      }
+    };
+
     taskManager
       .on('taskFinished', (testResults: SubprocessResult) => {
         const {
@@ -123,6 +131,13 @@ export default class MochaWrapper extends Mocha {
 
         runner.reEmitSubprocessEvents(testResults, retriedTests);
 
+        // @ts-ignore
+        if (events.some(e => e.event === "fail") && this.suite.bail()) {
+          debugLog('Test failed with bailed flag');
+          runner.emitFinishEvents(done);
+          process.exit(code);
+        }
+
         const hasEndEvent = events.find((event) => event.type === 'runner' && event.event === 'end');
         if (!hasEndEvent && code !== 0) {
           process.exit(code);
@@ -130,15 +145,6 @@ export default class MochaWrapper extends Mocha {
       })
       .on('end', () => {
         debugLog('All tests finished processing');
-
-        const done = (failures: number) => {
-          if (reporter.done) {
-            reporter.done(failures, onComplete);
-          } else if (onComplete) {
-            onComplete(failures);
-          }
-        };
-
         runner.emitFinishEvents(done);
       });
 
